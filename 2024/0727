@@ -1,0 +1,27 @@
+import os
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# URLの設定
+url = "https://www.ncbi.nlm.nih.gov/books/browse/#W3sidGVybSI6InNraW4ifSx7InNvcnQiOiJwdWJkYXRlIn0seyJzb3J0X2RpcmVjdGlvbiI6InJldmVyc2UifSx7ImNzcmYtdG9rZW4iOiJDRThDNUQ1QjZBNDgzNjExXzAzNzZTSUQifV0="
+
+# ウェブページの内容を取得
+response = requests.get(url)
+soup = BeautifulSoup(response.content, "html.parser")
+
+# 書籍タイトルを指定されたXPathセレクタで取得
+titles = [title.text.strip() for title in soup.select('p.title a font')]
+
+# データフレームの作成
+df = pd.DataFrame(titles, columns=["書籍タイトル"])
+
+# ユーザーのドキュメントフォルダに出力ファイルパスを設定
+output_directory = os.path.join(os.path.expanduser('~'), 'Documents')
+output_file_path = os.path.join(output_directory, '0727_ncbi_result_dev.xlsx')
+
+# Excelに保存
+df.to_excel(output_file_path, index=False)
+
+# 完了メッセージ
+print("完了したにゃ(=^・^=)")
