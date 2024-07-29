@@ -1,0 +1,22 @@
+import requests
+from bs4 import BeautifulSoup
+
+# ターゲットURL
+url = "https://www.ncbi.nlm.nih.gov/books/?term=eye"
+
+# ページの内容を取得
+response = requests.get(url)
+soup = BeautifulSoup(response.content, 'html.parser')
+
+# クラス 'title' を持つすべての <p> 要素を取得
+title_elements = soup.find_all('p', class_='title')
+
+# 各タイトルを抽出して表示
+for title_element in title_elements:
+    title_link = title_element.find('a')
+    if title_link:
+        title_text = title_link.get_text(strip=True)
+    else:
+        title_text = title_element.get_text(strip=True)
+    
+    print("書籍タイトル:", title_text)
