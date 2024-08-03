@@ -1,0 +1,50 @@
+import os
+from pathlib import Path
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# ファイルパスの設定
+hfile = Path(r'C:\Users\yukik\Downloads\皮膚 - 書籍 - NCBI.html')
+
+# ファイルの存在を確認
+if not hfile.exists():
+    print(f"File not found: {hfile}")
+else:
+    # ファイルを読み取る
+    htext = hfile.read_text(encoding='utf-8')
+    # print(htext)  # ファイル内容の表示（デバッグ用）
+
+    # BeautifulSoupを使用してHTMLを解析
+    soup = BeautifulSoup(htext, 'html.parser')
+    
+    # 書籍タイトルとリンクを取得
+    titles = [a.get_text() for a in soup.select('a[ref]')]
+    links = [a['href'] for a in soup.select('a[ref]')]
+    
+    # タイトルとリンクの長さを一致させる
+    max_length = max(len(titles), len(links))
+    titles.extend([''] * (max_length - len(titles)))
+    links.extend([''] * (max_length - len(links)))
+
+    # 取得したデータの表示
+    for t, l in zip(titles, links):
+        print(f"Title: {t}, Link: {l}")
+
+    # 解析したデータを辞書に保存
+    data = {
+        'Title': titles,
+        'Link': links
+    }
+
+    # データフレームを作成
+    df = pd.DataFrame(data)
+
+    # 出力ファイルパスをユーザーのドキュメントフォルダに設定
+    output_directory = os.path.join(os.path.expanduser('~'), 'Documents')
+    output_file_path = os.path.join(output_directory, 'ncbi_result_info.xlsx')
+
+    # データフレームをExcelファイルに書き出す
+    df.to_excel(output_file_path, index=False, engine='openpyxl')
+
+    print(f"Excelファイル '{output_file_path}' に保存されたよ！")
+#08/03リンク付きでExcel取得
