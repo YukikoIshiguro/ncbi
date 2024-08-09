@@ -1,0 +1,83 @@
+import os
+from bs4 import BeautifulSoup
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+import time
+
+# SeleniumのWebDriverを設定
+driver_path = r'C:\Users\yukik\Desktop\chromedriver.exe'
+service = Service(driver_path)
+driver = webdriver.Chrome(service=service)
+
+# 初期ページを開く
+url = 'https://www.ncbi.nlm.nih.gov/books/?term=skin'
+driver.get(url)
+
+titles = []
+links = []
+
+# 繰り返し回数を設定
+max_iterations = 5
+current_iteration = 0
+
+while current_iteration < max_iterations:
+    # ページの内容をBeautifulSoupで解析
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+    # 書籍タイトルとリンクを取得
+    new_titles = [a.get_text().strip() for a in soup.select('a[href^="/books/"]')]
+    new_links = ['https://www.ncbi.nlm.nih.gov' + a['href'] for a in soup.select('a[href^="/books/"]')]
+
+    # タイトルが正しく取得できているか確認
+    if new_titles:
+        titles.extend(new_titles)
+        links.extend(new_links)
+    else:
+        print(f"タイトルが取得できませんでした。ページのソースを確認してください。")
+        break
+
+    try:
+        # "Next" ボタンが表示されるまでスクロールし、ページ遷移を待機
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+
+        # "Next" ボタンがクリック可能になるまで待つ
+        next_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.LINK_TEXT, "Next"))
+        )
+        next_button.click()
+        current_iteration += 1
+    except Exception as e:
+        print(f"次のページに移動できませんでした: {e}")
+        break
+
+# ドライバーを閉じる
+driver.quit()
+
+# タイトルとリンクの長さを一致させる
+max_length = max(len(titles), len(links))
+titles.extend([''] * (max_length - len(titles)))
+links.extend([''] * (max_length - len(links)))
+
+# 解析したデータを辞書に保存
+data = {
+    'Title': titles,
+    'Link': links
+}
+
+# データフレームを作成
+df = pd.DataFrame(data)
+
+# 出力ファイルパスをユーザーのドキュメントフォルダに設定
+output_directory = os.path.join(os.path.expanduser('~'), 'Documents')
+output_file_path = os.path.join(output_directory, 'ncbi_result_info.xlsx')
+
+# データフレームをExcelファイルに書き出す
+df.to_excel(output_file_path, index=False, engine='openpyxl')
+
+print(f"Excelファイル '{output_file_path}' に保存されました！")
+＃2024＿08＿09＿23：09＿タイトル取得の改善中
