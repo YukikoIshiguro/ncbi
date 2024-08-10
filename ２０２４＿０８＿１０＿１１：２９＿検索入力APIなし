@@ -1,0 +1,44 @@
+import sys
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# ターミナルから検索キーワードを取得
+search_term = sys.argv[1] if len(sys.argv) > 1 else 'default'
+
+# SeleniumのWebDriverを設定
+driver_path = r'C:\Users\yukik\Desktop\chromedriver.exe'
+service = Service(driver_path)
+driver = webdriver.Chrome(service=service)
+
+# 初期ページを開く
+url = 'https://www.ncbi.nlm.nih.gov/books/'
+driver.get(url)
+
+# input要素を見つけて値を入力
+
+input_element = driver.find_element(By.ID, 'term')  # input要素のID 'term' を指定
+input_element.clear()  # 既存の値をクリア
+input_element.send_keys(search_term)  # ターミナルからの検索キーワードを入力
+
+# 入力後にフォームを送信
+input_element.submit()
+
+# 結果ページを少し待つ
+driver.implicitly_wait(5)
+
+
+# 検索ボタンをクリック
+try:
+    search_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.CLASS_NAME, "Search"))
+    )
+    search_button.click()
+except Exception as e:
+    print(f"検索ボタンをクリックできませんでした: {e}")
+
+
+# 必要な操作が終わったらブラウザを閉じる
+driver.quit()
