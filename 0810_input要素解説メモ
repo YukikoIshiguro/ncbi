@@ -1,0 +1,49 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+
+# SeleniumのWebDriverを設定
+driver_path = r'C:\Users\yukik\Desktop\chromedriver.exe'
+service = Service(driver_path)
+driver = webdriver.Chrome(service=service)
+
+# 初期ページを開く
+url = 'https://www.ncbi.nlm.nih.gov/books/'
+driver.get(url)
+
+# input要素を見つけて値を入力
+input_element = driver.find_element(By.ID, 'term')  # input要素のID 'term' を指定
+input_element.clear()  # 既存の値をクリア
+input_element.send_keys('skin')  # 値を入力
+
+# 入力後にフォームを送信する場合は、以下を追加
+input_element.submit()
+
+# 結果ページを少し待つ
+driver.implicitly_wait(5)
+
+# 必要な操作が終わったらブラウザを閉じる
+driver.quit()
+
+#memo
+#説明
+#driver.find_element(By.ID, 'term') で、IDがtermのinput要素を取得しています。
+#input_element.clear() で、既存の入力値をクリアします。
+#input_element.send_keys('skin') で、skinという値を入力します。
+#input_element.submit() でフォームを送信します。
+#このスクリプトを実行すると、NCBI Bookshelfの検索ボックスにskinが入力され、検索が行われます。
+
+#memo2
+# input要素を見つけて値を入力
+input_element = driver.find_element(By.ID, 'input-id')  # 実際のinput要素のIDに置き換える
+input_element.clear()  # 既存の値をクリア
+input_element.send_keys('2')  # 値を入力
+#「次へ >」を押下して画面遷移したいです。
+#EC.element_to_be_clickable((By.LINK_TEXT, "Next"))
+#おそらく、「次へ >」でヒットするはずなのですが、スペースや半角・全角などを正しく設定!
+#それでダメなら、「次へ >」で試してみてください。
+
+#memo3
+#あるいは、以下のようにclass nameで取得してみてください。取得できない場合は、next以外でも試してください。
+#EC.element_to_be_clickable((By.CLASS_NAME, "next"))
+
