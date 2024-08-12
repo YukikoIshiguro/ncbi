@@ -1,0 +1,85 @@
+import sys
+import os
+from bs4 import BeautifulSoup
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+import time
+
+# ターミナルにメッセージを表示して検索ワードを入力してもらう
+search_term = input("検索ワードを入力してね！: ")
+
+# ターミナルにメッセージを表示して繰り返しの回数を入力してもらう
+max_iterations = int(input("繰り返しの回数を指定してね！: "))
+
+# SeleniumのWebDriverを設定
+driver_path = r'C:\Users\yukik\Desktop\chromedriver.exe'  # あなたのchromedriver.exeのパスを指定してください
+service = Service(driver_path)
+driver = webdriver.Chrome(service=service)
+
+# 初期ページを開く
+url = f'https://www.ncbi.nlm.nih.gov/books/?term={search_term}'  # 検索キーワードをURLに組み込む
+driver.get(url)
+
+titles = []
+links = []
+
+current_iteration = 0
+
+while current_iteration < max_iterations:
+    # ページの内容をBeautifulSoupで解析
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    booklists = soup.find_all('p', class_='title')  # p.title を全て取得
+
+    # 書籍タイトルとリンクを取得
+    for booklist in booklists:
+        a_tag = booklist.find('a', href=True)
+        if a_tag:
+            titles.append(a_tag.get_text().strip())  # タイトルを取得してリストに追加
+            links.append('https://www.ncbi.nlm.nih.gov' + a_tag['href'])  # フルリンクを作成してリストに追加
+
+    try:
+        # "Next" ボタンが表示されるまでスクロール
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)  # スクロール後の読み込みを待つ
+
+        # "Next" ボタンがクリック可能になるまで待つ
+        next_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CLASS_NAME, "active.page_link.next"))
+        )
+        next_button.click()
+        current_iteration += 1
+    except Exception as e:
+        # "Next" ボタンが見つからない場合はループを終了
+        print(f"次のページに移動できませんでした: {e}")
+        break
+
+# ドライバーを閉じる
+driver.quit()
+
+# タイトルとリンクの長さを一致させる
+max_length = max(len(titles), len(links))
+titles.extend([''] * (max_length - len(titles)))
+links.extend([''] * (max_length - len(links)))
+
+# 解析したデータを辞書に保存
+data = {
+    'Title': titles,
+    'Link': links
+}
+
+# データフレームを作成
+df = pd.DataFrame(data)
+
+# 出力ファイルパスをユーザーのドキュメントフォルダに設定
+output_directory = os.path.join(os.path.expanduser('~'), 'Documents')
+output_file_path = os.path.join(output_directory, 'ncbi_result_info.xlsx')
+
+# データフレームをExcelファイルに書き出す
+df.to_excel(output_file_path, index=False, engine='openpyxl')
+
+print(f"Excelファイル '{output_file_path}' に保存されました！")
+#2024_08_12_APIなし＿繰り返し回数をターミナルで入力
